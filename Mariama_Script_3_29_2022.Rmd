@@ -24,6 +24,7 @@ library(aqp)
 library(lattice)
 library(knitr)
 library(kableExtra)
+library(sharpshootR)
 
 # magnor soil colors
 soils <- c('magnor')
@@ -44,4 +45,88 @@ plotSPC(s.dry, cex.names = 1, print.id = FALSE) ; title('Dry Colors')
 
 ```
 
-## 
+## Climate Summary
+
+...................
+
+```{r climate summary, echo=FALSE}
+soils <- c('magnor')
+s <- fetchOSD(soils, extended = TRUE)
+par(mar=c(1,0,1,5), mfrow=c(1,2))
+trellis.par.set(plot.line = list(col = 'RoyalBlue'))
+res <- vizAnnualClimate(s$climate.annual, IQR.cex = 1.25, cex=1.5, pch=18)
+print(res$fig)
+```
+
+## Hillslope Position
+
+..................
+
+```{r hillslope summary, echo=FALSE, message=FALSE}
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+```
+
+## Geomorphic Composition
+
+.........................
+
+```{r geomorphic comp, echo=FALSE}
+res <- vizGeomorphicComponent(s$geomcomp)
+print(res$fig)
+```
+
+## Siblings 
+
+........................
+
+``` {r siblings, echo=FALSE, message=FALSE}
+s <- siblings('magnor', component.data = TRUE)
+
+s.list <- unique(c(s$sib$series[1], s$sib$sibling))
+h <- fetchOSD(s.list)
+
+par(mar = c (0,0,0,0), mfrow=c(1,1))
+SoilTaxonomyDendrogram(h, y.offset = 0.4, width = 0.2)
+```
+
+## Cousins 
+
+.......................
+
+``` {r cousins, echo=FALSE, nessage=FALSE}
+s <- siblings('magnor', component.data = TRUE, cousins = TRUE)
+d <- unique(rbind(s$sib.data, s$cousin.data))
+d <- d[which(d$compkind == 'Series'), ]
+m <- component.adj.matrix(d, mu = 'mukey', co = 'compname', wt = 'comppct_r')
+par(mar=c(1,1,1,1))
+plotSoilRelationGraph(m, s='magnor', vertex.scaling.factor=1, edge.transparency=0.25, edge.col=grey(0.5), edge.highlight.col='black', vertex.label.family='sans', spanning.tree='max')
+```
+
+## Soil Component Relation 
+
+.........................
+
+``` {r soil relations, echo=FALSE, message=FALSE}
+magnor_mu <- SDA_query("SELECT DISTINCT mapunit.mukey FROM component
+INNER JOIN mapunit ON component.mukey = mapunit.mukey
+WHERE compname LIKE '%Magnor%'")
+
+magnor <- SDA_query(paste0("SELECT mapunit.mukey, compname, comppct_r FROM component
+LEFT JOIN mapunit ON component.mukey = mapunit.mukey
+WHERE mapunit.mukey IN ", format_SQL_in_statement(magnor_mu$mukey)))
+
+m.1 <- component.adj.matrix(magnor, method='occurrence')
+
+idx <- order(m.1[,which(colnames(m.1) == "Magnor")], decreasing = TRUE)[1:10]
+magnor.idx <- which(rownames(m.1) == "Magnor")[1]
+if (!magnor.idx %in% idx) {
+  idx <- c(idx, magnor.idx)
+}
+m.small <- m.1[idx, idx]
+
+par(mfcol=c(1,1), mar=c(0,0,1,0))
+plotSoilRelationGraph(m.small, s='Magnor')
+
+m.2 <- component.adj.matrix(magnor)
+```
