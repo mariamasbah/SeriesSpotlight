@@ -1,0 +1,47 @@
+---
+title: "Mariama Series Spotlight"
+author: "Mariama Bah and Andrew Paolucci"
+date: "3/29/2022"
+output: html_document
+theme:
+      bootswatch:minty
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## The Magnor Series 
+
+This is an R Markdown document created by Mariama Bah, WI NRCS soil scientist intern, showcasing the Magnor soil series. It was designed to be an educational tool for viewers to learn about soil survey data. For official soil survey data viewers should consultt Web Soil Survey and other USDA databases. 
+
+```{r profile plot, include=FALSE}
+
+# load librarys
+library(soilDB)
+library(aqp)
+library(lattice)
+library(knitr)
+library(kableExtra)
+
+# magnor soil colors
+soils <- c('magnor')
+
+s <- fetchOSD(soils)
+s.dry <- fetchOSD(soils, colorState = 'dry')
+
+```
+
+## Typical Pedon
+
+The following plots were created using the Official Series Description (OSD) typical pedon for the Magnor series. To view a description of the Magnor series visit: https://soilseries.sc.egov.usda.gov . The thickness of the silty mantle ranges from about 30 to 90 cm (A, E, and B horizons) to underlying dense till (2B and 2C horizons). Cultivated soils typically have a plowed/disturbed horizon (Ap horizon) 15-25 cm thick. 
+
+```{r pressure, echo=FALSE}
+par(mar=c(2,0,2,2), mfrow=c(1,2))
+plotSPC(s, cex.names = 1, plot.depth.axis=FALSE, print.id = FALSE) ; title('Moist Colors')
+plotSPC(s.dry, cex.names = 1, print.id = FALSE) ; title('Dry Colors')
+
+```
+
+## 
