@@ -1,5 +1,4 @@
 
-
 library(sp)
 library(scales)
 library(aqp)
@@ -31,14 +30,6 @@ plotSPC(s.dry, cex.names = 1) ; title('Dry Colors')
 # climate summaries
 soils <- c('magnor')
 s <- fetchOSD(soils, extended = TRUE)
-
-s.dry <- fetchOSD(soils, colorState = 'dry')
-
-str(s, 1)
-
-par(mar=c(0,1,2,3), mfrow=c(1,2))
-plotSPC(s, cex.names = 1, plot.depth.axis=FALSE, print.id=FALSE) ; title('Moist Colors')
-plotSPC(s.dry, cex.names = 1, print.id=FALSE) ; title('Dry Colors')
 
 cols <- brewer.pal(9, 'Set1') 
 cols <- cols[c(1:5,7,9)]
@@ -79,7 +70,7 @@ d <- d[which(d$compkind == 'Series'), ]
 m <- component.adj.matrix(d, mu = 'mukey', co = 'compname', wt = 'comppct_r')
 
 par(mar=c(1,1,1,1))
-plotSoilRelationGraph(m, s='magnor', vertex.scaling.factor=1, edge.transparency=0.25, edge.col=grey(0.5), edge.highlight.col='black', vertex.label.family='sans', spanning.tre)
+plotSoilRelationGraph(m, s='magnor', vertex.scaling.factor=1, edge.transparency=0.25, edge.col=grey(0.5), edge.highlight.col='black', vertex.label.family='sans', spanning.tree='max')
 
 #soil component relations
 
@@ -106,5 +97,44 @@ plotSoilRelationGraph(m.small, s='Magnor')
 
 m.2 <- component.adj.matrix(magnor)
 print(round(m.2, 2))
+
+#interactive map
+
+magnor <- seriesExtent('magnor')
+
+s <- c('magnor')
+
+cols <- brewer.pal('Set1', n = length(s))
+
+s.extent <- lapply(s, seriesExtent, timeout=120)
+
+s.extent <- do.call('rbind', s.extent)
+
+
+s.extent <- st_as_sf(s.extent)
+
+library(mapview)
+mapview(s.extent, zcol = 'series', legend = TRUE)
+
+#soil extent map
+
+cols <- brewer.pal('Set1', n=3)
+
+
+magnor <- seriesExtent('magnor')
+
+par(mar=c(1,0,1,0))
+map(database='county', regions='wisconsin')
+plot(magnor, col=cols[2], border=cols[2], add=TRUE)
+box()
+title(main='Magnor Series Extent', line=1.25)
+mtext(side=1, text=as.character(Sys.Date()), line=0)
+
+res <- SDA_query("SELECT component.mukey, muname, compname, comppct_r from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN mapunit ON muaoverlap.mukey = mapunit.mukey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'magnor' AND areatypename = 'MLRA' AND areasymbol = '31'")
+kable(res, row.names = FALSE)
+
+#soil extent table
+res <- SDA_query("SELECT compname, areasymbol as mlra, areaname as mlra_name, count(compname) as n_components from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'magnor' AND areatypename = 'MLRA' GROUP BY compname, areasymbol, areaname ORDER BY count(compname) DESC")
+kable(res, row.names = FALSE)
 
 
