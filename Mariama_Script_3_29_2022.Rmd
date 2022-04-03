@@ -18,7 +18,7 @@ This is an R Markdown document created by Mariama Bah, WI NRCS soil scientist in
 
 ```{r profile plot, include=FALSE}
 
-# load librarys
+# load libraries
 library(soilDB)
 library(aqp)
 library(lattice)
@@ -129,4 +129,68 @@ par(mfcol=c(1,1), mar=c(0,0,1,0))
 plotSoilRelationGraph(m.small, s='Magnor')
 
 m.2 <- component.adj.matrix(magnor)
+```
+
+## Interactive Map
+
+.........................
+
+``` {r interactive, echo=FALSE, message=FALSE, warning=FALSE}
+library(soilDB)
+library(raster)
+library(sp)
+library(sf)
+library(rgdal)
+library(maps)
+library(RColorBrewer)
+library(knitr)
+library(kableExtra)
+
+magnor <- seriesExtent('magnor')
+
+s <- c('magnor')
+
+cols <- brewer.pal('Set1', n = length(s))
+
+s.extent <- lapply(s, seriesExtent, timeout=120)
+
+s.extent <- do.call('rbind', s.extent)
+
+
+s.extent <- st_as_sf(s.extent)
+
+library(mapview)
+mapview(s.extent, zcol = 'series', legend = TRUE)
+```
+
+## Series Extent 
+
+......................
+
+``` {r extent, echo=FALSE, message=FALSE, warning=FALSE}
+
+cols <- brewer.pal('Set1', n=3)
+
+
+magnor <- seriesExtent('magnor')
+
+
+par(mar=c(1,0,1,0))
+map(database='county', regions='wisconsin')
+plot(magnor, col=cols[2], border=cols[2], add=TRUE)
+box()
+title(main='Magnor Series Extent', line=1.25)
+mtext(side=1, text=as.character(Sys.Date()), line=0)
+
+res <- SDA_query("SELECT component.mukey, muname, compname, comppct_r from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN mapunit ON muaoverlap.mukey = mapunit.mukey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'magnor' AND areatypename = 'MLRA' AND areasymbol = '31'")
+kable(res, row.names = FALSE)
+```
+
+## Series Extent Table
+
+......................
+
+``` {r table, echo=FALSE, message=FALSE, warning=FALSE}
+res <- SDA_query("SELECT compname, areasymbol as mlra, areaname as mlra_name, count(compname) as n_components from laoverlap JOIN muaoverlap ON laoverlap.lareaovkey = muaoverlap.lareaovkey JOIN component ON muaoverlap.mukey = component.mukey WHERE compname = 'magnor' AND areatypename = 'MLRA' GROUP BY compname, areasymbol, areaname ORDER BY count(compname) DESC")
+kable(res, row.names = FALSE)
 ```
